@@ -21,7 +21,7 @@ apiKey = "c93b7fdbcb11a189e8f33a89d1bfa56f92836d5ed3c148ec9bf912f29a9abee5"  # a
 st.set_page_config(page_title="Anedya IoT Dashboard", layout="wide")
 
 
-st_autorefresh(interval=10000, limit=None, key="auto-refresh-handler")
+st_autorefresh(interval=20000, limit=None, key="auto-refresh-handler")
 
 # --------------- HELPER FUNCTIONS -----------------------
 

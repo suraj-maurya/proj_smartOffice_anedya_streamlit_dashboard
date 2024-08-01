@@ -48,11 +48,11 @@ def main():
     if "FanButtonText" not in st.session_state:
         st.session_state.FanButtonText = "Turn Fan On!"
 
-    if "LightButtonText" not in st.session_state:
-        st.session_state.LightButtonText = "Turn Light On!"
+    if "BulbButtonText" not in st.session_state:
+        st.session_state.BulbButtonText = "Turn Bulb On!"
 
-    if "LightState" not in st.session_state:
-        st.session_state.LightState = False
+    if "BulbState" not in st.session_state:
+        st.session_state.BulbState = False
 
     if "FanState" not in st.session_state:
         st.session_state.FanState = False
@@ -140,7 +140,7 @@ def main():
         temperatureData = fetchTemperatureData(param_from=st.session_state.from_input_time, param_to=st.session_state.to_input_time,param_aggregation_interval_in_minutes=agg_interval)
 
         GetFanStatus()
-        GetLightStatus()
+        GetBulbStatus()
 
         drawDashboard()
 
@@ -179,7 +179,7 @@ def drawDashboard():
         st.rerun()
 
     st.markdown(
-        "This dashboard provides live view of the Anedya's Office. Also allowing you to control the Light and Fan remotely!"
+        "This dashboard provides live view of the Anedya's Office. Also allowing you to control the Bulb and Fan remotely!"
     )
 
     st.subheader(body="Current Status", anchor=False)
@@ -233,9 +233,9 @@ def drawDashboard():
     with buttons[1]:
         org_btn2=st.columns([0.47,0.53], gap="small",vertical_alignment="center")
         with org_btn2[0]:
-            st.text("Control Light:")
+            st.text("Control Bulb:")
         with org_btn2[1]:
-            st.button(label=st.session_state.LightButtonText, on_click=operateLight)
+            st.button(label=st.session_state.BulbButtonText, on_click=operateBulb)
 
     with st.container():
         st.subheader(body="Time Range", anchor=False)
@@ -443,19 +443,19 @@ def operateFan():
         st.toast("Fan turned off!")
 
 
-def operateLight():
-    if st.session_state.LightState is False:
-        anedya_sendCommand("Light", "ON")
-        anedya_setValue("Light", True)
-        st.session_state.LightButtonText = "Turn Light Off!"
-        st.session_state.LightState = True
-        st.toast("Light turned on!")
+def operateBulb():
+    if st.session_state.BulbState is False:
+        anedya_sendCommand("Bulb", "ON")
+        anedya_setValue("Bulb", True)
+        st.session_state.BulbButtonText = "Turn Bulb Off!"
+        st.session_state.BulbState = True
+        st.toast("Bulb turned on!")
     else:
-        anedya_sendCommand("Light", "OFF")
-        anedya_setValue("Light", False)
-        st.session_state.LightButtonText = "Turn Light On!"
-        st.session_state.LightState = False
-        st.toast("Light turned off!")
+        anedya_sendCommand("Bulb", "OFF")
+        anedya_setValue("Bulb", False)
+        st.session_state.BulbButtonText = "Turn Bulb On!"
+        st.session_state.BulbState = False
+        st.toast("Bulb turned off!")
 
 
 @st.cache_data(ttl=4, show_spinner=False)
@@ -473,16 +473,16 @@ def GetFanStatus() -> list:
 
 
 @st.cache_data(ttl=4, show_spinner=False)
-def GetLightStatus() -> list:
-    value = anedya_getValue("Light")
+def GetBulbStatus() -> list:
+    value = anedya_getValue("Bulb")
     if value[1] == 1:
         on = value[0]
         if on:
-            st.session_state.LightState = True
-            st.session_state.LightButtonText = "Turn Light Off!"
+            st.session_state.BulbState = True
+            st.session_state.BulbButtonText = "Turn Bulb Off!"
         else:
-            st.session_state.LightState = False
-            st.session_state.LightButtonText = "Turn Light On!"
+            st.session_state.BulbState = False
+            st.session_state.BulbButtonText = "Turn Bulb On!"
     return value
 
 def reset_time_range():

@@ -101,8 +101,10 @@ def main():
         current_time_object = time(hour, minute)       
         st.session_state.from_time = current_time_object
     if "to_time" not in st.session_state:
-        # Get the current date
-        current_date = datetime.now()
+        # Get the current date and time in the Indian time zone
+        indian_time_zone = pytz.timezone('Asia/Kolkata')
+        current_date = datetime.now(indian_time_zone)
+        
         # Extract the year, month, and day
         hour = current_date.hour
         minute = current_date.minute
@@ -486,8 +488,10 @@ def GetBulbStatus() -> list:
     return value
 
 def reset_time_range():
-    # Get the current date
-    current_date = datetime.now()
+    # Get the current date and time in the Indian time zone
+    indian_time_zone = pytz.timezone('Asia/Kolkata')
+    current_date = datetime.now(indian_time_zone)
+    
     # Extract the year, month, and day
     hour = current_date.hour
     minute = current_date.minute

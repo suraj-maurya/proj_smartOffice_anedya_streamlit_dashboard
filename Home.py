@@ -14,6 +14,7 @@ from utils.anedya import anedya_setValue
 from utils.anedya import fetchHumidityData
 from utils.anedya import fetchTemperatureData
 from utils.anedya import anedya_get_latestData
+from utils.anedya import anedya_getDeviceStatus
 
 nodeId = "NODE_ID"  # get it from anedya dashboard -> project -> node
 apiKey = "API_KEY"  # aneyda project apikey
@@ -94,12 +95,22 @@ def main():
     if "var_auto_update_time_range" not in st.session_state:
         st.session_state.var_auto_update_time_range = True
 
+    if "device_status" not in st.session_state:
+        st.session_state.device_status = "Offline"
+
         
     if st.session_state.LoggedIn is False:
         drawLogin()
     else:
         # st.session_state.counter=st.session_state.counter+1
         # st.write(st.session_state.counter)
+        deviceState=anedya_getDeviceStatus()
+        if deviceState[1]:
+            if deviceState[0]:
+                st.session_state.device_status = "Online"
+            else:
+                st.session_state.device_status = "Offline"                
+
         res_humidity = anedya_get_latestData("humidity")
         st.session_state.CurrentHumidity = res_humidity[0]
         res_tem=anedya_get_latestData("temperature")
@@ -150,12 +161,15 @@ def drawLogin():
 
 
 def drawDashboard():
-    headercols = st.columns([1, 0.1, 0.1], gap="small")
+    headercols = st.columns([1, 0.1, 0.1,0.1], gap="small")
     with headercols[0]:
         st.title("Anedya Demo Dashboard", anchor=False)
     with headercols[1]:
-        st.button("Refresh")
+        # st.status("online",state="complete")
+        st.button(label=st.session_state.device_status)
     with headercols[2]:
+        st.button("Refresh")
+    with headercols[3]:
         logout = st.button("Logout")
 
     if logout:

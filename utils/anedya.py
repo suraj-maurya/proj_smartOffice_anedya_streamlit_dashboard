@@ -238,3 +238,32 @@ def fetchTemperatureData(param_from=0, param_to=0,param_aggregation_interval_in_
         print(response_message[0])
         value = pd.DataFrame()
         return value
+
+
+@st.cache_data(ttl=50, show_spinner=False)
+def anedya_getDeviceStatus():
+    url = "https://api.anedya.io/v1/health/status"
+    apiKey_in_formate = "Bearer " + apiKey
+
+    payload = json.dumps(
+        {"nodes": [nodeId], "lastContactThreshold": 60}
+    )
+    headers = {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "Authorization": apiKey_in_formate,
+    }
+
+    response = requests.request("POST", url, headers=headers, data=payload)
+    responseMessage = response.text
+    print(responseMessage)
+    errorCode = json.loads(responseMessage).get("errcode")
+    if errorCode == 0:
+        device_status = json.loads(responseMessage).get("data")[nodeId].get("online")
+        value = [device_status, 1]
+    else:
+        print(responseMessage)
+        # st.write("No previous value!!")
+        value = [False, -1]
+
+    return value

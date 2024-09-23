@@ -89,8 +89,9 @@ def anedya_getValue(KEY):
 
     return value
 
+
 @st.cache_data(ttl=15, show_spinner=False)
-def anedya_get_latestData(param_variable_identifier: str)->list:
+def anedya_get_latestData(param_variable_identifier: str) -> list:
     url = "https://api.anedya.io/v1/data/latest"
     apiKey_in_formate = "Bearer " + apiKey
 
@@ -147,7 +148,9 @@ def anedya_getData(
 
 
 @st.cache_data(ttl=60, show_spinner=False)
-def fetchHumidityData(param_from, param_to,param_aggregation_interval_in_minutes=10) -> pd.DataFrame:
+def fetchHumidityData(
+    param_from, param_to, param_aggregation_interval_in_minutes=10
+) -> pd.DataFrame:
     # currentTime = int(time.time())
     # pastHour_Time = int(currentTime - 86400)
     # st.session_state.counter=st.session_state.counter+1
@@ -195,7 +198,9 @@ def fetchHumidityData(param_from, param_to,param_aggregation_interval_in_minutes
 
 
 @st.cache_data(ttl=60, show_spinner=False)
-def fetchTemperatureData(param_from=0, param_to=0,param_aggregation_interval_in_minutes=10) -> pd.DataFrame:
+def fetchTemperatureData(
+    param_from=0, param_to=0, param_aggregation_interval_in_minutes=10
+) -> pd.DataFrame:
 
     # currentTime = int(time.time())    #to means recent time
     # pastHour_Time = int(currentTime - 86400)

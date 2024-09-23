@@ -1,7 +1,6 @@
+"""Anedya Demo Dashboard."""
 import streamlit as st
 import pandas as pd
-import numpy as np
-import altair as alt
 import streamviz
 import pytz
 from datetime import date, datetime,timedelta,time
@@ -14,13 +13,12 @@ from utils.anedya import anedya_setValue
 from utils.anedya import fetchHumidityData
 from utils.anedya import fetchTemperatureData
 from utils.anedya import anedya_get_latestData
+from utils.charts import humidity_chart
+from utils.charts import temperature_chart
 from utils.anedya import anedya_getDeviceStatus
-
-nodeId = "NODE_ID"  # get it from anedya dashboard -> project -> node
-apiKey = "API_KEY"  # aneyda project apikey
+ 
 nodeId = "20deeee8-f8ae-11ee-9dd8-c3aa61afe2fb"  # get it from anedya dashboard -> project -> node
 apiKey = "c93b7fdbcb11a189e8f33a89d1bfa56f92836d5ed3c148ec9bf912f29a9abee5"  # aneyda project apikey
-
 
 st.set_page_config(page_title="Anedya IoT Dashboard", layout="wide")
 
@@ -53,11 +51,11 @@ def main():
     if "FanButtonText" not in st.session_state:
         st.session_state.FanButtonText = "Turn Fan On!"
 
-    if "lightButtonText" not in st.session_state:
-        st.session_state.lightButtonText = "Turn Light On!"
+    if "LightButtonText" not in st.session_state:
+        st.session_state.LightButtonText = "Turn Light On!"
 
-    if "lightState" not in st.session_state:
-        st.session_state.lightState = False
+    if "LightState" not in st.session_state:
+        st.session_state.LightState = False
 
     if "FanState" not in st.session_state:
         st.session_state.FanState = False
@@ -95,6 +93,12 @@ def main():
     if "var_auto_update_time_range" not in st.session_state:
         st.session_state.var_auto_update_time_range = True
 
+    if "chart_box_1_name" not in st.session_state:
+        st.session_state.chart_box_1_name = "Humidity"
+
+    if "chart_box_2_name" not in st.session_state:
+        st.session_state.chart_box_2_name = "Temperature"
+
     if "device_status" not in st.session_state:
         st.session_state.device_status = "Offline"
 
@@ -122,7 +126,6 @@ def main():
         unforamted_current_temp_data_datetime = datetime.fromtimestamp(epoch_time, indian_time_zone)
         current_temp_data_datetime=unforamted_current_temp_data_datetime.strftime('%Y-%m-%d %H:%M:%S %Z')
 
-
         interval=st.session_state.to_input_time - st.session_state.from_input_time
         agg_interval=10
         if interval > 2592000:
@@ -138,7 +141,6 @@ def main():
         GetLightStatus()
 
         drawDashboard()
-
 
 def drawLogin():
     cols = st.columns([1, 0.8, 1], gap="small")
@@ -179,7 +181,6 @@ def drawDashboard():
     st.markdown(
         "This dashboard provides live view of the Anedya's Office. Also allowing you to control the Light and Fan remotely!"
     )
-    # org_subheading=st.columns([0.25, 0.3,1],vertical_alignment="bottom")
     org_subheading=st.columns([0.4,1,1],vertical_alignment="bottom")
     with org_subheading[0]:
         st.subheader(body="Current Status:", anchor=False)
@@ -237,9 +238,9 @@ def drawDashboard():
         with org_btn2[0]:
             st.text("Control Light:")
         with org_btn2[1]:
-            st.button(label=st.session_state.lightButtonText, on_click=operateLight)
+            st.button(label=st.session_state.LightButtonText, on_click=operateLight)
 
-
+#-----------------------------------------Time range filter-----------------------------------------
     with st.container():
         st.subheader(body="Time Range", anchor=False)
         datetime_cols = st.columns([1,1,0.2], gap="small", vertical_alignment="bottom")
@@ -307,128 +308,45 @@ def drawDashboard():
                 auto_update_time_range(True)
                 # st.rerun()
         
-
         if st.session_state.var_auto_update_time_range:
             update_time_range()
 
     # ------------------------chart container------------------------
     with st.container():
+        # multi_select=st.multiselect("Select your chart", ["Humidity", "Temperature"], default="Humidity")
         # st.write(st.session_state.from_input_time, st.session_state.to_input_time)
         if st.session_state.from_input_time < st.session_state.to_input_time:
             charts = st.columns(2, gap="small")
             with charts[0]:
-                st.subheader(body="Humidity ", anchor=False)
-
-                if humidityData.empty:
-                    st.write("No Data Available!")
-                else:
-                    humidity_chart_an = (
-                        alt.Chart(data=humidityData)
-                        .mark_area( # type: ignore
-                            line={"color": "#1fa2ff"},
-                            color=alt.Gradient(
-                                gradient="linear",
-                                stops=[
-                                    alt.GradientStop(color="#1fa2ff", offset=1),
-                                    alt.GradientStop(color="rgba(255,255,255,0)", offset=0),
-                                ],
-                                x1=1,
-                                x2=1,
-                                y1=1,
-                                y2=0,
-                            ),
-                            interpolate="monotone",
-                            cursor="crosshair",
-                        )
-                        .encode(  # type: ignore
-                            x=alt.X(
-                                shorthand="Datetime:T",
-                                axis=alt.Axis(
-                                    format="%Y-%m-%d %H:%M:%S",
-                                    title="Datetime",
-                                    tickCount=10,
-                                    grid=True,
-                                    tickMinStep=5,
-                                ),
-                            ),  # T indicates temporal (time-based) data
-                            y=alt.Y(
-                                "aggregate:Q",
-                                scale=alt.Scale(domain=[20, 100]),
-                                axis=alt.Axis(title="Humidity (%)", grid=True, tickCount=10),
-                            ),  # Q indicates quantitative data
-                            tooltip=[
-                                alt.Tooltip(
-                                    "Datetime:T",
-                                    format="%Y-%m-%d %H:%M:%S",
-                                    title="Time",
-                                ),
-                                alt.Tooltip("aggregate:Q", format="0.2f", title="Value"),
-                            ],
-                        )
-                        .properties(height=400)
-                        .interactive()
-                    )
-
-                    # Display the Altair chart using Streamlit
-                    st.altair_chart(humidity_chart_an, use_container_width=True)
-
+                cols = st.columns([1,0.8], gap="small")
+                with cols[0]:
+                    st.subheader(body=st.session_state.chart_box_1_name, anchor=False)
+                with cols[1]:
+                    # select_box_1=st.selectbox("Select your units", ["Temperature", "Humidity"], index=1,label_visibility="hidden",key="box-1")
+                    # if select_box_1!=st.session_state.chart_box_1_name:
+                    #     st.session_state.chart_box_1_name=select_box_1
+                    #     st.rerun()
+                    select_box_1="Humidity"   # for now hard coding the value 
+                if select_box_1=="Humidity":
+                    humidity_chart(humidityData)
+                elif select_box_1=="Temperature":
+                    temperature_chart(temperatureData)
+                    
             with charts[1]:
-                st.subheader(body="Temperature", anchor=False)
-
-                if temperatureData.empty:
-                    st.write("No Data Available!")
-                else:
-                    temperature_chart_an = (
-                        alt.Chart(data=temperatureData)
-                        .mark_area( # type: ignore
-                            line={"color": "#1fa2ff"},
-                            color=alt.Gradient(
-                                gradient="linear",
-                                stops=[
-                                    alt.GradientStop(color="#1fa2ff", offset=1),
-                                    alt.GradientStop(color="rgba(255,255,255,0)", offset=0),
-                                ],
-                                x1=1,
-                                x2=1,
-                                y1=1,
-                                y2=0,
-                            ),
-                            interpolate="monotone",
-                            cursor="crosshair",
-                        )
-                        .encode(  # type: ignore
-                            x=alt.X(
-                                shorthand="Datetime:T",
-                                axis=alt.Axis(
-                                    format="%Y-%m-%d %H:%M:%S",
-                                    title="Datetime",
-                                    tickCount=10,
-                                    grid=True,
-                                    tickMinStep=5,
-                                ),
-                            ),  # T indicates temporal (time-based) data
-                            y=alt.Y(
-                                "aggregate:Q",
-                                # scale=alt.Scale(domain=[0, 100]),
-                                scale=alt.Scale(zero=False, domain=[10, 50]),
-                                axis=alt.Axis(
-                                    title="Temperature (°C)", grid=True, tickCount=10
-                                ),
-                            ),  # Q indicates quantitative data
-                            tooltip=[
-                                alt.Tooltip(
-                                    "Datetime:T",
-                                    format="%Y-%m-%d %H:%M:%S",
-                                    title="Time",
-                                ),
-                                alt.Tooltip("aggregate:Q", format="0.2f", title="Value"),
-                            ],
-                        )
-                        .properties(height=400)
-                        .interactive()
-                    )  # type: ignore
-
-                    st.altair_chart(temperature_chart_an, use_container_width=True)
+                cols=st.columns([1,0.8])
+                with cols[0]:
+                    st.subheader(body=st.session_state.chart_box_2_name, anchor=False)
+                with cols[1]:
+                    # select_box_2=st.selectbox("Select your units", ["Temperature", "Humidity"],index=0,label_visibility="hidden",key="box-2")
+                    # if select_box_2!=st.session_state.chart_box_2_name:
+                    #     st.session_state.chart_box_2_name=select_box_2
+                    #     st.rerun()
+                    select_box_2="Temperature"
+                if select_box_2=="Temperature":
+                    temperature_chart(temperatureData)
+                elif select_box_2=="Humidity":
+                    humidity_chart(humidityData)
+                    
         else:
             st.warning("  'To' should be greater than 'From'",icon="⚠️")
     # ----------------------- Map Container------------------------------------            
@@ -440,8 +358,7 @@ def drawDashboard():
         st.map(
             locationData, zoom=16, color="#0044ff", size=14, use_container_width=True
         )
-
-
+        
 def operateFan():
     if st.session_state.FanState is False:
         anedya_sendCommand("Fan", "ON")
@@ -458,17 +375,17 @@ def operateFan():
 
 
 def operateLight():
-    if st.session_state.lightState is False:
+    if st.session_state.LightState is False:
         anedya_sendCommand("Light", "ON")
         anedya_setValue("Light", True)
-        st.session_state.lightButtonText = "Turn Light Off!"
-        st.session_state.lightState = True
+        st.session_state.LightButtonText = "Turn Light Off!"
+        st.session_state.LightState = True
         st.toast("Light turned on!")
     else:
         anedya_sendCommand("Light", "OFF")
         anedya_setValue("Light", False)
-        st.session_state.lightButtonText = "Turn Light On!"
-        st.session_state.lightState = False
+        st.session_state.LightButtonText = "Turn Light On!"
+        st.session_state.LightState = False
         st.toast("Light turned off!")
 
 
@@ -491,11 +408,11 @@ def GetLightStatus() -> list:
     if value[1] == 1:
         on = value[0]
         if on:
-            st.session_state.lightState = True
-            st.session_state.lightButtonText = "Turn Light Off!"
+            st.session_state.LightState = True
+            st.session_state.LightButtonText = "Turn Light Off!"
         else:
-            st.session_state.lightState = False
-            st.session_state.lightButtonText = "Turn Light On!"
+            st.session_state.LightState = False
+            st.session_state.LightButtonText = "Turn Light On!"
     return value
 def auto_update_time_range(param_hold_or_start: bool = True):
     # st.session_state.counter=st.session_state.counter+1
